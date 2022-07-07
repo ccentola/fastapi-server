@@ -1,31 +1,13 @@
-from typing import Optional
-from fastapi import FastAPI
-from pydantic import BaseModel
-from random import randrange
+from fastapi import FastAPI, Depends, HTTPException, status, Response
 
+from sqlalchemy.orm import Session
+from . import models, schemas
+from .database import engine, get_db
+
+
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-
-
-class Post(BaseModel):
-    title: str
-    content: str
-    published: bool = True
-    rating: Optional[int] = None
-
-
-my_posts = [
-    {
-        "title": "Hello World",
-        "content": "Welcome to my awesome blog",
-        "id": 1,
-    },
-    {
-        "title": "Hello Galaxy",
-        "content": "Snark quarf",
-        "id": 2,
-    },
-]
 
 
 @app.get("/")
@@ -33,42 +15,70 @@ def read_root():
     return {"Hello": "World"}
 
 
-# posts
-@app.get("/posts")
-def get_posts():
-    return {"data": my_posts}
+# transactions
+@app.get("/transactions")
+def get_transactions(db: Session = Depends(get_db)):
+    transactions = db.query(models.Transaction).all()
+    return {"data": transactions}
 
 
-@app.post("/posts")
-def create_post(post: Post):
-    post_dict = post.dict()
-    post_dict["id"] = randrange(0, 1000000)
-    my_posts.append(post_dict)
-    return {"data": post_dict}
+@app.post("/transactions")
+def create_transaction(
+    transaction: schemas.TransactionCreate, db: Session = Depends(get_db)
+):
+    new_transaction = models.Transaction(**transaction.dict())
+    db.add(new_transaction)
+    db.commit()
+    db.refresh(new_transaction)
+    return new_transaction
 
 
-@app.get("/posts/{post_id}")
-def get_post(post_id: int):
-    for post in my_posts:
-        if post["id"] == post_id:
-            return {"data": post}
-
-    return {"data": None}
-
-
-@app.put("/posts/{post_id}")
-def update_post(post_id: int, post: Post):
-    for post_index, post_dict in enumerate(my_posts):
-        if post_dict["id"] == post_id:
-            my_posts[post_index] = post.dict()
-            return {"data": my_posts[post_index]}
-    return {"data": None}
+@app.get("/transactions/{transaction_id}")
+def get_transaction(transaction_id: int, db: Session = Depends(get_db)):
+    transaction = (
+        db.query(models.Transaction)
+        .filter(models.Transaction.id == transaction_id)
+        .first()
+    )
+    if transaction is None:
+        return {"message": "Transaction not found"}
+    return transaction
 
 
-@app.delete("/posts/{post_id}")
-def delete_post(post_id: int):
-    for post_index, post_dict in enumerate(my_posts):
-        if post_dict["id"] == post_id:
-            my_posts.pop(post_index)
-            return {"data": my_posts}
-    return {"data": None}
+@app.put("/transactions/{transaction_id}")
+def update_transaction(
+    transaction_id: int,
+    updated_transaction: schemas.TransactionCreate,
+    db: Session = Depends(get_db),
+):
+    transaction_query = db.query(models.Transaction).filter(
+        models.Transaction.id == transaction_id
+    )
+
+    transaction = transaction_query.first()
+
+    if transaction is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
+        )
+
+    transaction_query.update(updated_transaction.dict(), synchronize_session=False)
+    db.commit()
+
+    return {"data": transaction_query.first()}
+
+
+@app.delete("/transactions/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_transaction(transaction_id: int, db: Session = Depends(get_db)):
+    transaction = db.query(models.Transaction).filter(
+        models.Transaction.id == transaction_id
+    )
+    if transaction.first() is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
+        )
+
+    transaction.delete(synchronize_session=False)
+    db.commit()
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
