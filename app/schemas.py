@@ -8,6 +8,21 @@ class TransactionBase(BaseModel):
     description: str
 
 
+class Transaction(TransactionBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
+class TransactionOut(TransactionBase):
+    Transaction: Transaction
+
+    class Config:
+        orm_mode = True
+
+
 class TransactionCreate(TransactionBase):
     pass
 
