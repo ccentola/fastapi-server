@@ -1,7 +1,8 @@
-from .database import Base
+from sqlalchemy.orm import relationship
 from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey
 from sqlalchemy.sql.expression import text
 from sqlalchemy.sql.sqltypes import TIMESTAMP
+from .database import Base
 
 
 class Transaction(Base):
@@ -16,6 +17,8 @@ class Transaction(Base):
     owner_id = Column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
+
+    owner = relationship("User")
 
 
 class User(Base):

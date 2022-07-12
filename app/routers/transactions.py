@@ -10,11 +10,14 @@ router = APIRouter(prefix="/transactions", tags=["Transactions"])
 # transactions
 @router.get("/", response_model=List[schemas.Transaction])
 def get_transactions(
-    db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)
+    db: Session = Depends(get_db),
+    current_user: int = Depends(oauth2.get_current_user),
+    limit: int = 10,
 ):
     transactions = (
         db.query(models.Transaction)
         .filter(models.Transaction.owner_id == current_user.id)
+        .limit(limit)
         .all()
     )
     return transactions

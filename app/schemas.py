@@ -3,32 +3,6 @@ from datetime import datetime
 from typing import Optional
 
 
-class TransactionBase(BaseModel):
-    amount: float
-    date: str
-    description: str
-
-
-class Transaction(TransactionBase):
-    id: int
-    created_at: datetime
-    owner_id: int
-
-    class Config:
-        orm_mode = True
-
-
-class TransactionOut(TransactionBase):
-    Transaction: Transaction
-
-    class Config:
-        orm_mode = True
-
-
-class TransactionCreate(TransactionBase):
-    pass
-
-
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
@@ -55,3 +29,30 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     id: Optional[str] = None
+
+
+class TransactionBase(BaseModel):
+    amount: float
+    date: str
+    description: str
+
+
+class Transaction(TransactionBase):
+    id: int
+    created_at: datetime
+    owner_id: int
+    owner: UserOut
+
+    class Config:
+        orm_mode = True
+
+
+class TransactionOut(TransactionBase):
+    Transaction: Transaction
+
+    class Config:
+        orm_mode = True
+
+
+class TransactionCreate(TransactionBase):
+    pass
