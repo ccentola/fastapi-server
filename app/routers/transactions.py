@@ -1,5 +1,5 @@
 from fastapi import Depends, HTTPException, status, Response, APIRouter
-from typing import List
+from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from .. import models, schemas, oauth2
@@ -13,11 +13,14 @@ def get_transactions(
     db: Session = Depends(get_db),
     current_user: int = Depends(oauth2.get_current_user),
     limit: int = 10,
+    offset: int = 0,
+    # search: Optional[str] = None
 ):
     transactions = (
         db.query(models.Transaction)
         .filter(models.Transaction.owner_id == current_user.id)
         .limit(limit)
+        .offset(offset)
         .all()
     )
     return transactions

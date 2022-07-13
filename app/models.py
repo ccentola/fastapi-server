@@ -18,6 +18,18 @@ class Transaction(Base):
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
+    category_id = Column(Integer, ForeignKey("categories.id", ondelete="CASCADE"))
+    owner = relationship("User")
+    category = relationship("Category")
+
+
+class Category(Base):
+    __tablename__ = "categories"
+    id = Column(Integer, primary_key=True)
+    category = Column(String, nullable=False)
+    owner_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     owner = relationship("User")
 
 

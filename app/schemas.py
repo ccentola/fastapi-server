@@ -56,3 +56,21 @@ class TransactionOut(TransactionBase):
 
 class TransactionCreate(TransactionBase):
     pass
+
+
+class CategoryBase(BaseModel):
+    category: str
+
+
+class Category(CategoryBase):
+    id: int
+    category: str
+    owner_id: int
+    owner: UserOut
+
+    class Config:
+        orm_mode = True
+
+
+class CategoryCreate(CategoryBase):
+    pass
