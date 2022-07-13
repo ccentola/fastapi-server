@@ -4,8 +4,8 @@ from . import models, config
 from .database import engine
 from .routers import transactions, user, auth, categories
 
-
-models.Base.metadata.create_all(bind=engine)
+# removed to allow alembic to manage db
+# models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
